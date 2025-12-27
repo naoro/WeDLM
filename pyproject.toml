@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wedlm"
+version = "0.1.0"
+description = "WeDLM: Causal Attention Reordered Diffusion - Reconciling Diffusion Language Models with Standard Causal Attention for Fast Inference"
+readme = "Readme.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Aiwei Liu"},
+    {name = "Minghua He"},
+    {name = "Shaoxun Zeng"},
+    {name = "Linhao Zhang"},
+    {name = "Chuhan Wu"},
+    {name = "Wei Jia"},
+    {name = "Yuan Liu"},
+    {name = "Yang Yu"},
+    {name = "Xiao Zhou"},
+    {name = "Jie Zhou"},
+]
+keywords = ["diffusion", "language-model", "causal-attention", "inference", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.1.0",
+    "transformers>=4.40.0",
+    "triton>=3.0.0",
+    "flash-attn>=2.5.0",
+    "xxhash>=3.0.0",
+    "numpy>=1.24.0",
+    "tqdm>=4.60.0",
+    "safetensors>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+]
+web = [
+    "flask>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/xxx/WeDLM"
+Repository = "https://github.com/xxx/WeDLM"
+Documentation = "https://github.com/xxx/WeDLM#readme"
+
+[tool.setuptools]
+packages = ["wedlm", "wedlm.engine", "wedlm.layers", "wedlm.models", "wedlm.utils"]
+
+[tool.setuptools.package-data]
+wedlm = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
