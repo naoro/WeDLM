@@ -10,7 +10,7 @@
 
 <!-- Badges with better spacing -->
 <p>
-<a href="paper/wedlm.pdf"><img src="https://img.shields.io/badge/📄%20Paper-PDF-b31b1b.svg?style=for-the-badge" alt="Paper"></a>
+<a href="https://arxiv.org/abs/2512.22737"><img src="https://img.shields.io/badge/📄%20Paper-arXiv-b31b1b.svg?style=for-the-badge" alt="Paper"></a>
 &nbsp;
 <a href="https://wedlm.github.io"><img src="https://img.shields.io/badge/🌐%20Project-Page-blue?style=for-the-badge" alt="Project Page"></a>
 &nbsp;
@@ -34,7 +34,7 @@
 
 <!-- Demo GIF -->
 <img src="images/demo.gif" width="90%" alt="WeDLM vs Qwen3-8B-Instruct Speed Comparison">
-<p><i>⬆️ Real-time comparison: WeDLM-8B-Instruct (left) vs Qwen3-8B-Instruct with vLLM (right) on the same prompt</i></p>
+<p><i>⬆️ Real-time comparison: Qwen3-8B-Instruct with vLLM (left) vs WeDLM-8B-Instruct (right) on the same prompt</i></p>
 
 </div>
 
@@ -67,9 +67,48 @@ Most diffusion language models use bidirectional attention, which breaks KV cach
 ### Installation
 
 ```bash
-# Install from GitHub
-pip install git+https://github.com/tencent/WeDLM.git
+git clone https://github.com/tencent/WeDLM.git
+cd WeDLM && bash install.sh
 ```
+
+<details>
+<summary><b>Manual Installation</b></summary>
+
+```bash
+# Step 1: PyTorch
+pip install torch==2.8.0+cu129 --index-url https://download.pytorch.org/whl/cu129
+
+# Step 2: flash-attn build dependencies
+pip install psutil ninja packaging
+
+# Step 3: flash-attn (requires torch first)
+pip install flash-attn==2.7.4.post1 --no-build-isolation
+
+# Step 4: WeDLM
+git clone https://github.com/tencent/WeDLM.git
+cd WeDLM && pip install -e .
+```
+
+</details>
+
+<details>
+<summary><b>Docker Installation</b></summary>
+
+```bash
+# Pull the Docker image
+docker pull aiweiliu/wedlm:v3
+
+# Run the container with GPU support
+docker run -it --gpus all -p 8080:8080 --name wedlm aiweiliu/wedlm:v3 /bin/bash
+
+# Inside the container, run inference directly
+python example.py --model tencent/WeDLM-8B-Instruct
+
+# Inside the container, run web demo
+python web_demo.py --model tencent/WeDLM-8B-Instruct
+```
+
+</details>
 
 ### Run Inference
 
@@ -184,9 +223,9 @@ WeDLM preserves and often improves upon its base AR model capabilities.
 
 | Model | Base | Context | Download |
 |:---|:---|:---:|:---:|
-| **WeDLM-7B** | Qwen2.5-7B | 32k | [![HuggingFace](https://img.shields.io/badge/🤗-HuggingFace-yellow)](https://huggingface.co/tencent/WeDLM-7B) |
+| **WeDLM-7B** | Qwen2.5-7B | 32k | [![HuggingFace](https://img.shields.io/badge/🤗-HuggingFace-yellow)](https://huggingface.co/tencent/WeDLM-7B-Base) |
 | **WeDLM-7B-Instruct** | Qwen2.5-7B | 32k | [![HuggingFace](https://img.shields.io/badge/🤗-HuggingFace-yellow)](https://huggingface.co/tencent/WeDLM-7B-Instruct) |
-| **WeDLM-8B** | Qwen3-8B | 32k | [![HuggingFace](https://img.shields.io/badge/🤗-HuggingFace-yellow)](https://huggingface.co/tencent/WeDLM-8B) |
+| **WeDLM-8B** | Qwen3-8B | 32k | [![HuggingFace](https://img.shields.io/badge/🤗-HuggingFace-yellow)](https://huggingface.co/tencent/WeDLM-8B-Base) |
 | **WeDLM-8B-Instruct** ⭐ | Qwen3-8B | 32k | [![HuggingFace](https://img.shields.io/badge/🤗-HuggingFace-yellow)](https://huggingface.co/tencent/WeDLM-8B-Instruct) |
 
 ---
@@ -199,8 +238,13 @@ WeDLM preserves and often improves upon its base AR model capabilities.
 
 ```bash
 git clone https://github.com/tencent/WeDLM.git
-cd WeDLM && pip install -e .
+cd WeDLM && bash install.sh
 ```
+
+> [!NOTE]
+> `flash-attn` requires compilation and must be installed after PyTorch.
+> The `install.sh` script handles this automatically (default: CUDA 12.9).
+> For other CUDA versions: `CUDA_VERSION=cu124 bash install.sh`
 
 ### Evaluation
 
@@ -244,7 +288,7 @@ out = model(**inputs)
 WeDLM introduces **Topological Reordering** to perform parallel mask recovery under standard causal attention, combined with **Streaming Parallel Decoding** for continuous prefix commitment.
 
 *   👉 **[Project Page](https://wedlm.github.io)** — Interactive explanations and visualizations
-*   👉 **[Paper](paper/wedlm.pdf)** — Technical details and full experimental results
+*   👉 **[Paper](https://arxiv.org/abs/2512.22737)** — Technical details and full experimental results
 
 ---
 
@@ -256,6 +300,7 @@ If you find WeDLM useful for your research, please cite:
 @article{liu2025wedlm,
   title={WeDLM: Reconciling Diffusion Language Models with Standard Causal Attention for Fast Inference},
   author={Liu, Aiwei and He, Minghua and Zeng, Shaoxun and Zhang, Linhao and Wu, Chuhan and Jia, Wei and Liu, Yuan and Yu, Yang and Zhou, Xiao and Zhou, Jie},
+  journal={arXiv preprint arXiv:2512.22737},
   year={2025}
 }
 ```
