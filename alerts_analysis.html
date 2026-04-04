@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניתוח התראות - עבר הירקון, תל אביב</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 20px;
+    direction: rtl;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 1.8em;
+    margin-bottom: 5px;
+    color: #f8fafc;
+  }
+  .subtitle {
+    text-align: center;
+    color: #94a3b8;
+    margin-bottom: 25px;
+    font-size: 0.95em;
+  }
+  .chart-container {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  .stat-card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  .stat-card .number {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  .stat-card .label {
+    font-size: 0.85em;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+  .stat-card.blue { border-top: 4px solid #3b82f6; }
+  .stat-card.blue .number { color: #3b82f6; }
+  .stat-card.red { border-top: 4px solid #ef4444; }
+  .stat-card.red .number { color: #ef4444; }
+  .stat-card.yellow { border-top: 4px solid #eab308; }
+  .stat-card.yellow .number { color: #eab308; }
+
+  .legend-box {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+  }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .table-container {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .table-container h2 {
+    margin-bottom: 15px;
+    font-size: 1.2em;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  th {
+    background: #334155;
+    padding: 10px 12px;
+    text-align: right;
+    font-weight: 600;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #334155;
+  }
+  tr.eh { background: rgba(239, 68, 68, 0.08); }
+  tr.dan { background: rgba(59, 130, 246, 0.08); }
+  tr:hover { background: rgba(255,255,255,0.05); }
+
+  .footer {
+    text-align: center;
+    color: #64748b;
+    margin-top: 20px;
+    font-size: 0.8em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>ניתוח התראות ואזעקות</h1>
+  <p class="subtitle">עבר הירקון, תל אביב — 7 ימים אחרונים</p>
+
+  <div class="stats">
+    <div class="stat-card blue">
+      <div class="number">19</div>
+      <div class="label">התראה באזור דן<br>+ אזעקה בעבר הירקון</div>
+    </div>
+    <div class="stat-card red">
+      <div class="number">6</div>
+      <div class="label">אזעקה בעבר הירקון<br>ללא התראה מקדימה</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="number">15</div>
+      <div class="label">התראה באזור דן<br>ללא אזעקה בעבר הירקון</div>
+    </div>
+  </div>
+
+  <div class="legend-box">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#3b82f6"></div>
+      <span><strong>התראה + אזעקה:</strong> התראה באזור דן שאחריה הגיעה אזעקה בעבר הירקון (תוך 10 דקות)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#ef4444"></div>
+      <span><strong>אזעקה ללא התראה:</strong> אזעקה בעבר הירקון ללא התראה מקדימה באזור דן</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#eab308"></div>
+      <span><strong>התראה ללא אזעקה:</strong> התראה באזור דן שלא הגיעה אחריה אזעקה בעבר הירקון</span>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="alertsChart" height="100"></canvas>
+  </div>
+
+  <div class="table-container">
+    <h2>פירוט התראות</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>זמן</th>
+          <th>אזור</th>
+          <th>סוג התראה</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="eh"><td>2026-04-04 18:31</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-04 18:27</td><td>גבעתיים</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-04 17:12</td><td>תל אביב - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-04 10:19</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-04 10:17</td><td>גבעת שמואל</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-04 07:32</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-04 07:28</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-04 07:08</td><td>גבעתיים</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-04 03:01</td><td>רמת גן - מערב</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-04 00:48</td><td>תל אביב - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-03 12:11</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-03 12:06</td><td>רמת גן - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-03 02:39</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-03 02:35</td><td>רמת גן - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-03 01:53</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-03 01:46</td><td>גני תקווה</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-02 19:43</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-02 19:40</td><td>רמת גן - מערב</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-02 14:30</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-02 14:24</td><td>רמת גן - מערב</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-02 12:21</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-02 12:20</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-02 12:17</td><td>רמת גן - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-02 12:17</td><td>גבעת שמואל</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-02 11:24</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-02 11:22</td><td>תל אביב - מרכז העיר</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-02 09:05</td><td>גני תקווה</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-02 02:02</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-02 01:14</td><td>גבעת שמואל</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-01 21:56</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-01 20:10</td><td>תל אביב - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-01 19:09</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-01 19:04</td><td>מקווה ישראל</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-01 18:33</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-01 18:25</td><td>תל אביב - דרום העיר ויפו</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-01 17:55</td><td>גני תקווה</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-01 15:25</td><td>מקווה ישראל</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-01 04:23</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-01 04:16</td><td>תל אביב - מרכז העיר</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-04-01 02:51</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-04-01 02:48</td><td>גני תקווה</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-03-31 20:32</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-03-31 20:24</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-31 20:21</td><td>תל אביב - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-03-31 16:53</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-31 16:48</td><td>גני תקווה</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-31 14:00</td><td>תל אביב - מרכז העיר</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-31 04:23</td><td>אזור</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-30 23:31</td><td>תל אביב - דרום העיר ויפו</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-03-30 19:26</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-30 19:20</td><td>גני תקווה</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-03-30 09:17</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-30 09:15</td><td>גבעתיים</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-03-29 23:51</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-29 23:44</td><td>בת ים</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-29 21:30</td><td>אור יהודה</td><td>ירי רקטות וטילים</td></tr>
+<tr class="dan"><td>2026-03-29 08:33</td><td>תל אביב - מזרח</td><td>ירי רקטות וטילים</td></tr>
+<tr class="eh"><td>2026-03-29 06:59</td><td>תל אביב - עבר הירקון</td><td>ירי רקטות וטילים</td></tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footer">
+    נתונים מפיקוד העורף — oref.org.il &bull;
+    נוצר ב-2026-04-04 09:49
+  </p>
+</div>
+
+<script>
+const ctx = document.getElementById('alertsChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ["Sun 29/03", "Mon 30/03", "Tue 31/03", "Wed 01/04", "Thu 02/04", "Fri 03/04", "Sat 04/04"],
+    datasets: [
+      {
+        label: 'התראה + אזעקה',
+        data: [1, 2, 2, 4, 5, 3, 2],
+        backgroundColor: 'rgba(59,130,246,0.85)',
+        borderColor: '#3b82f6',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: 'אזעקה ללא התראה',
+        data: [1, 0, 1, 1, 1, 0, 2],
+        backgroundColor: 'rgba(239,68,68,0.85)',
+        borderColor: '#ef4444',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: 'התראה ללא אזעקה',
+        data: [2, 1, 2, 3, 3, 0, 4],
+        backgroundColor: 'rgba(234,179,8,0.85)',
+        borderColor: '#eab308',
+        borderWidth: 1,
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: { color: '#e2e8f0', font: { size: 13 } }
+      },
+      tooltip: {
+        rtl: true,
+        textDirection: 'rtl'
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#94a3b8', font: { size: 12 } },
+        grid: { color: 'rgba(148,163,184,0.1)' }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#94a3b8',
+          font: { size: 12 },
+          stepSize: 1
+        },
+        grid: { color: 'rgba(148,163,184,0.15)' }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

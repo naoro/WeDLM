@@ -323,6 +323,290 @@ def create_chart(cat1_daily, cat2_daily, cat3_daily, days=7):
     return output_path
 
 
+def create_html_chart(cat1_daily, cat2_daily, cat3_daily, all_alerts, days=7):
+    """Create an interactive HTML chart with Chart.js and a details table."""
+
+    today = datetime.now().date()
+    date_range = [today - timedelta(days=i) for i in range(days - 1, -1, -1)]
+
+    labels = [d.strftime("%a %d/%m") for d in date_range]
+    cat1_values = [cat1_daily.get(d, 0) for d in date_range]
+    cat2_values = [cat2_daily.get(d, 0) for d in date_range]
+    cat3_values = [cat3_daily.get(d, 0) for d in date_range]
+
+    # Build event details table rows
+    cutoff = datetime.now() - timedelta(days=days)
+    relevant = [a for a in all_alerts
+                if a["time"] >= cutoff and (a["area"] == EVER_HAYARKON or a["area"] in DAN_AREAS)]
+    relevant.sort(key=lambda r: r["time"], reverse=True)
+
+    table_rows = ""
+    for a in relevant:
+        area_class = "eh" if a["area"] == EVER_HAYARKON else "dan"
+        table_rows += (
+            f'<tr class="{area_class}">'
+            f'<td>{a["time"].strftime("%Y-%m-%d %H:%M")}</td>'
+            f'<td>{a["area"]}</td>'
+            f'<td>{a["title"]}</td>'
+            f'</tr>\n'
+        )
+
+    html = f"""<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניתוח התראות - עבר הירקון, תל אביב</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  body {{
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 20px;
+    direction: rtl;
+  }}
+  .container {{ max-width: 1100px; margin: 0 auto; }}
+  h1 {{
+    text-align: center;
+    font-size: 1.8em;
+    margin-bottom: 5px;
+    color: #f8fafc;
+  }}
+  .subtitle {{
+    text-align: center;
+    color: #94a3b8;
+    margin-bottom: 25px;
+    font-size: 0.95em;
+  }}
+  .chart-container {{
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }}
+  .stats {{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+  }}
+  .stat-card {{
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }}
+  .stat-card .number {{
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }}
+  .stat-card .label {{
+    font-size: 0.85em;
+    color: #94a3b8;
+    line-height: 1.4;
+  }}
+  .stat-card.blue {{ border-top: 4px solid #3b82f6; }}
+  .stat-card.blue .number {{ color: #3b82f6; }}
+  .stat-card.red {{ border-top: 4px solid #ef4444; }}
+  .stat-card.red .number {{ color: #ef4444; }}
+  .stat-card.yellow {{ border-top: 4px solid #eab308; }}
+  .stat-card.yellow .number {{ color: #eab308; }}
+
+  .legend-box {{
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+  }}
+  .legend-item {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+  }}
+  .legend-dot {{
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }}
+
+  .table-container {{
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }}
+  .table-container h2 {{
+    margin-bottom: 15px;
+    font-size: 1.2em;
+  }}
+  table {{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }}
+  th {{
+    background: #334155;
+    padding: 10px 12px;
+    text-align: right;
+    font-weight: 600;
+  }}
+  td {{
+    padding: 8px 12px;
+    border-bottom: 1px solid #334155;
+  }}
+  tr.eh {{ background: rgba(239, 68, 68, 0.08); }}
+  tr.dan {{ background: rgba(59, 130, 246, 0.08); }}
+  tr:hover {{ background: rgba(255,255,255,0.05); }}
+
+  .footer {{
+    text-align: center;
+    color: #64748b;
+    margin-top: 20px;
+    font-size: 0.8em;
+  }}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>ניתוח התראות ואזעקות</h1>
+  <p class="subtitle">עבר הירקון, תל אביב — 7 ימים אחרונים</p>
+
+  <div class="stats">
+    <div class="stat-card blue">
+      <div class="number">{sum(cat1_values)}</div>
+      <div class="label">התראה באזור דן<br>+ אזעקה בעבר הירקון</div>
+    </div>
+    <div class="stat-card red">
+      <div class="number">{sum(cat2_values)}</div>
+      <div class="label">אזעקה בעבר הירקון<br>ללא התראה מקדימה</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="number">{sum(cat3_values)}</div>
+      <div class="label">התראה באזור דן<br>ללא אזעקה בעבר הירקון</div>
+    </div>
+  </div>
+
+  <div class="legend-box">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#3b82f6"></div>
+      <span><strong>התראה + אזעקה:</strong> התראה באזור דן שאחריה הגיעה אזעקה בעבר הירקון (תוך 10 דקות)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#ef4444"></div>
+      <span><strong>אזעקה ללא התראה:</strong> אזעקה בעבר הירקון ללא התראה מקדימה באזור דן</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#eab308"></div>
+      <span><strong>התראה ללא אזעקה:</strong> התראה באזור דן שלא הגיעה אחריה אזעקה בעבר הירקון</span>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="alertsChart" height="100"></canvas>
+  </div>
+
+  <div class="table-container">
+    <h2>פירוט התראות</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>זמן</th>
+          <th>אזור</th>
+          <th>סוג התראה</th>
+        </tr>
+      </thead>
+      <tbody>
+        {table_rows}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footer">
+    נתונים מפיקוד העורף — oref.org.il &bull;
+    נוצר ב-{datetime.now().strftime("%Y-%m-%d %H:%M")}
+  </p>
+</div>
+
+<script>
+const ctx = document.getElementById('alertsChart').getContext('2d');
+new Chart(ctx, {{
+  type: 'bar',
+  data: {{
+    labels: {json.dumps(labels)},
+    datasets: [
+      {{
+        label: 'התראה + אזעקה',
+        data: {json.dumps(cat1_values)},
+        backgroundColor: 'rgba(59,130,246,0.85)',
+        borderColor: '#3b82f6',
+        borderWidth: 1,
+        borderRadius: 4,
+      }},
+      {{
+        label: 'אזעקה ללא התראה',
+        data: {json.dumps(cat2_values)},
+        backgroundColor: 'rgba(239,68,68,0.85)',
+        borderColor: '#ef4444',
+        borderWidth: 1,
+        borderRadius: 4,
+      }},
+      {{
+        label: 'התראה ללא אזעקה',
+        data: {json.dumps(cat3_values)},
+        backgroundColor: 'rgba(234,179,8,0.85)',
+        borderColor: '#eab308',
+        borderWidth: 1,
+        borderRadius: 4,
+      }}
+    ]
+  }},
+  options: {{
+    responsive: true,
+    plugins: {{
+      legend: {{
+        labels: {{ color: '#e2e8f0', font: {{ size: 13 }} }}
+      }},
+      tooltip: {{
+        rtl: true,
+        textDirection: 'rtl'
+      }}
+    }},
+    scales: {{
+      x: {{
+        ticks: {{ color: '#94a3b8', font: {{ size: 12 }} }},
+        grid: {{ color: 'rgba(148,163,184,0.1)' }}
+      }},
+      y: {{
+        beginAtZero: true,
+        ticks: {{
+          color: '#94a3b8',
+          font: {{ size: 12 }},
+          stepSize: 1
+        }},
+        grid: {{ color: 'rgba(148,163,184,0.15)' }}
+      }}
+    }}
+  }}
+}});
+</script>
+</body>
+</html>"""
+
+    output_path = "alerts_analysis.html"
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"[*] HTML report saved to: {output_path}")
+    return output_path
+
+
 # ── Demo mode (for testing without API access) ────────────────────────────
 
 def load_demo_data():
@@ -412,9 +696,10 @@ def main():
         all_alerts = load_demo_data()
 
     cat1, cat2, cat3, recent = analyze_alerts(all_alerts, days=7)
-    output_path = create_chart(cat1, cat2, cat3, days=7)
+    create_chart(cat1, cat2, cat3, days=7)
+    html_path = create_html_chart(cat1, cat2, cat3, all_alerts, days=7)
 
-    print(f"\nDone! Open {output_path} to view the chart.")
+    print(f"\nDone! Open {html_path} in your browser to view the interactive report.")
     if not live_mode:
         print("\nNote: This was DEMO data. Run with --live to use real Pikud HaOref data.")
 
